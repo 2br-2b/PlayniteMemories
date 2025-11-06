@@ -1,0 +1,7 @@
+﻿Id: GameMemories
+Name: Game Memory Creator
+Author: John Wuller
+Version: 0.0.1
+Module: SharpMemories.dll
+Type: GenericPlugin
+Icon: icon.png
