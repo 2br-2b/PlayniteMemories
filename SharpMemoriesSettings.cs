@@ -84,11 +84,6 @@ namespace SharpMemories
         // Helper method to get a formatted display string for the current hotkey
         public string GetHotkeyDisplayString()
         {
-            if (!enableHotkey)
-            {
-                return "Disabled";
-            }
-
             var parts = new List<string>();
             if (hotkeyCtrl) parts.Add("Ctrl");
             if (hotkeyAlt) parts.Add("Alt");
