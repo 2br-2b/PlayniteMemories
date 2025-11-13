@@ -25,9 +25,10 @@ namespace SharpMemories
     public class SharpMemoriesSettings : ObservableObject
     {
         private bool enabled = true;
-        private int intervalMinutes = 30;
-        private string outputFolder = string.Empty;
+        private int intervalMinutes = 15;
+        private string outputFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Playnite");
         private string monitorFolder = string.Empty;
+        private bool enableMonitoring = true;
 
         // Hotkey settings
         private bool enableHotkey = false;
@@ -43,6 +44,7 @@ namespace SharpMemories
         public int IntervalMinutes { get => intervalMinutes; set => SetValue(ref intervalMinutes, value); }
         public string OutputFolder { get => outputFolder; set => SetValue(ref outputFolder, value); }
         public string MonitorFolder { get => monitorFolder; set => SetValue(ref monitorFolder, value); }
+        public bool EnableMonitoring { get => enableMonitoring; set => SetValue(ref enableMonitoring, value); }
 
         // Hotkey properties
         public bool EnableHotkey { get => enableHotkey; set => SetValue(ref enableHotkey, value); }
@@ -61,8 +63,15 @@ namespace SharpMemories
         // Helper method to check if hotkey is enabled for a specific library
         public bool IsHotkeyEnabledForLibrary(Guid libraryId)
         {
-            // Default to true for libraries not in the dictionary
-            return hotkeyEnabledByLibrary.TryGetValue(libraryId, out bool enabled) ? enabled : true;
+            // If we have an explicit setting for this library, use it
+            if (hotkeyEnabledByLibrary.TryGetValue(libraryId, out bool enabled))
+            {
+                return enabled;
+            }
+
+            // Steam library ID (CB91DFC9-B977-43BF-8E70-55F46E410FAB) - disable hotkey by default
+            // Other libraries default to enabled
+            return libraryId != Guid.Parse("CB91DFC9-B977-43BF-8E70-55F46E410FAB");
         }
 
         // Helper method to set hotkey enabled state for a specific library
@@ -70,6 +79,23 @@ namespace SharpMemories
         {
             hotkeyEnabledByLibrary[libraryId] = enabled;
             OnPropertyChanged(nameof(HotkeyEnabledByLibrary));
+        }
+
+        // Helper method to get a formatted display string for the current hotkey
+        public string GetHotkeyDisplayString()
+        {
+            if (!enableHotkey)
+            {
+                return "Disabled";
+            }
+
+            var parts = new List<string>();
+            if (hotkeyCtrl) parts.Add("Ctrl");
+            if (hotkeyAlt) parts.Add("Alt");
+            if (hotkeyShift) parts.Add("Shift");
+            parts.Add(hotkeyKey.ToString());
+
+            return string.Join(" + ", parts);
         }
     }
 
@@ -86,6 +112,7 @@ namespace SharpMemories
             {
                 settings = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(HotkeyDisplayString));
             }
         }
 
@@ -99,6 +126,22 @@ namespace SharpMemories
                 OnPropertyChanged();
             }
         }
+
+        private bool isRecordingHotkey = false;
+        public bool IsRecordingHotkey
+        {
+            get => isRecordingHotkey;
+            set
+            {
+                isRecordingHotkey = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(RecordButtonText));
+            }
+        }
+
+        public string RecordButtonText => IsRecordingHotkey ? "Press a key combination..." : "Record Hotkey";
+
+        public string HotkeyDisplayString => Settings?.GetHotkeyDisplayString() ?? "None";
 
         public SharpMemoriesSettingsViewModel(SharpMemories plugin)
         {
@@ -116,6 +159,9 @@ namespace SharpMemories
             else
             {
                 Settings = new SharpMemoriesSettings();
+                // Set default monitor folder to Steam screenshot folder if available
+                var steamFolder = SteamHelpers.GetSteamScreenshotFolder();
+                Settings.MonitorFolder = steamFolder ?? string.Empty;
             }
         }
 
@@ -175,6 +221,16 @@ namespace SharpMemories
             // List of errors is presented to user if verification fails.
             errors = new List<string>();
             return true;
+        }
+
+        // Update hotkey settings and refresh the display
+        public void UpdateHotkey(Key key, bool ctrl, bool alt, bool shift)
+        {
+            Settings.HotkeyKey = key;
+            Settings.HotkeyCtrl = ctrl;
+            Settings.HotkeyAlt = alt;
+            Settings.HotkeyShift = shift;
+            OnPropertyChanged(nameof(HotkeyDisplayString));
         }
     }
 }

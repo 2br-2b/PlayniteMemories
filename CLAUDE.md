@@ -38,49 +38,67 @@ start SharpMemories.sln
 
 1. **SharpMemories.cs** - Main plugin class that extends `GenericPlugin`
    - Handles Playnite lifecycle events (game start/stop, application start/stop)
-   - Delegates to manager classes for screenshot capture and folder monitoring
+   - Delegates to three manager classes: screenshot capture, folder monitoring, and keyboard hook
    - Coordinates lifecycle between multiple managers
+   - Implements per-library hotkey filtering (Steam defaults to disabled)
 
 2. **ScreenshotCaptureManager.cs** - Screenshot capture lifecycle management
    - Manages async capture loop with configurable intervals
    - Implements thread-safe capture control with cancellation tokens
    - Handles process-based window capture with fallback to full screen
    - Creates game-specific subfolders under output folder
+   - Supports on-demand capture via hotkey with sound feedback
 
 3. **FolderMonitorManager.cs** - External screenshot folder monitoring
    - Uses FileSystemWatcher to detect new files in a monitored folder
    - Automatically moves detected screenshots to game-specific folders
-   - Waits for file accessibility before moving (handles locked files)
-   - Useful for games with built-in screenshot features
+   - Waits for file accessibility before moving (handles locked files with 10 second timeout)
+   - Useful for games with built-in screenshot features (e.g., Steam games)
 
-4. **ScreenCapture.cs** - Low-level screenshot functionality
+4. **KeyboardHookManager.cs** - Global hotkey support
+   - Implements low-level keyboard hooks using Win32 API
+   - Registers configurable hotkey combinations (key + Ctrl/Alt/Shift modifiers)
+   - Triggers on-demand screenshot capture when hotkey is pressed
+   - Per-library enable/disable support
+   - Properly disposes hooks on game stop and application exit
+
+5. **ScreenCapture.cs** - Low-level screenshot functionality
    - Uses Win32 API (user32.dll, gdi32.dll) for capturing windows and screen
    - Provides `CaptureWindow()` and `CaptureScreen()` methods
    - Handles memory management for native resources (DC handles, bitmaps)
 
-5. **FileHelpers.cs** - Filename utilities
+6. **FileHelpers.cs** - Filename utilities
    - `MakeSafeFilename()` - Strips invalid filesystem characters from game names
 
-6. **SharpMemoriesSettings.cs** - Settings management
-   - `SharpMemoriesSettings` - Data model for plugin configuration
-   - `SharpMemoriesSettingsViewModel` - MVVM wrapper implementing `ISettings`
-   - Handles serialization/deserialization of user preferences
+7. **SteamHelpers.cs** - Steam integration utilities
+   - `GetSteamScreenshotFolder()` - Auto-detects Steam screenshot folder for most recent user
+   - `GetAllSteamScreenshotFolders()` - Returns all Steam user screenshot folders
+   - Searches common Steam installation paths
+   - Used to set default monitor folder on first run
 
-7. **SharpMemoriesSettingsView.xaml/.cs** - WPF settings UI
+8. **SharpMemoriesSettings.cs** - Settings management
+   - `SharpMemoriesSettings` - Data model for plugin configuration with per-library hotkey settings
+   - `SharpMemoriesSettingsViewModel` - MVVM wrapper implementing `ISettings`
+   - `LibraryPluginInfo` - Helper class for UI binding to library plugin settings
+   - Handles serialization/deserialization of user preferences
+   - Manages dynamic per-library hotkey enable flags (keyed by library plugin GUID)
+
+9. **SharpMemoriesSettingsView.xaml/.cs** - WPF settings UI
    - User interface for configuring plugin options
    - Data-bound to settings view model
+   - Supports hotkey recording UI
 
 ### Plugin Lifecycle
 
-- **OnGameStarted**: Starts screenshot capture loop and folder monitoring for the launched game
-- **OnGameStopped**: Terminates capture loop and stops folder monitoring when game closes
-- **OnApplicationStopped**: Cleanup when Playnite exits
+- **OnGameStarted**: Starts screenshot capture loop, folder monitoring, and registers hotkey (if enabled) for the launched game
+- **OnGameStopped**: Terminates capture loop, stops folder monitoring, and unregisters hotkey when game closes
+- **OnApplicationStopped**: Cleanup when Playnite exits (disposes keyboard hook)
 
-### Dual Screenshot System
+### Triple Screenshot System
 
-The plugin supports two concurrent screenshot mechanisms:
+The plugin supports three concurrent screenshot mechanisms:
 
-**Active Capture (ScreenshotCaptureManager)**:
+**Active Capture (ScreenshotCaptureManager - Timer-based)**:
 1. Starts async task when game launches
 2. Waits for configured interval, then captures screenshot
 3. Attempts to capture specific game window by process ID first
@@ -91,16 +109,46 @@ The plugin supports two concurrent screenshot mechanisms:
 **Passive Monitoring (FolderMonitorManager)**:
 1. Watches a user-specified folder for new files (e.g., game's built-in screenshot folder)
 2. Detects file creation events via FileSystemWatcher
-3. Waits for file to become accessible (up to 10 seconds)
+3. Waits for file to become accessible (up to 10 seconds, checking every 100ms)
 4. Moves file to the same game-specific subfolder as active captures
 5. Useful for consolidating screenshots from games with native screenshot features
+
+**On-Demand Capture (KeyboardHookManager)**:
+1. Registers a global keyboard hook with configurable hotkey combination
+2. Triggers immediate screenshot capture when hotkey is pressed during gameplay
+3. Plays system sound (Asterisk) as feedback
+4. Can be enabled/disabled per library (Steam defaults to disabled to avoid conflicts)
+5. Uses same output folder structure as active capture
 
 ### Key Configuration
 
 - **Enabled**: Toggle automatic screenshot capture
-- **IntervalMinutes**: Time between screenshots (default: 30 minutes)
-- **OutputFolder**: Directory for saved screenshots (defaults to `%AppData%\Playnite\Plugins\SharpMemories\Screenshots`)
-- **MonitorFolder**: Optional folder to monitor for external screenshots (e.g., game's built-in screenshot directory)
+- **IntervalMinutes**: Time between screenshots (default: 15 minutes)
+- **OutputFolder**: Directory for saved screenshots (defaults to `%UserProfile%\Pictures\Playnite`)
+- **MonitorFolder**: Optional folder to monitor for external screenshots (defaults to Steam screenshot folder if detected)
+- **EnableMonitoring**: Toggle folder monitoring feature
+- **EnableHotkey**: Toggle hotkey feature
+- **HotkeyKey**: Key for hotkey (default: F12)
+- **HotkeyCtrl/HotkeyAlt/HotkeyShift**: Modifier keys for hotkey combination
+- **HotkeyEnabledByLibrary**: Dictionary mapping library plugin GUIDs to hotkey enable flags (Steam defaults to false)
+
+### Important Implementation Details
+
+**Per-Library Hotkey Filtering**:
+- Steam library (CB91DFC9-B977-43BF-8E70-55F46E410FAB) defaults to hotkey disabled to avoid conflicts with Steam's built-in screenshot feature
+- Other libraries default to hotkey enabled
+- User can override per-library settings in UI
+- Filtering happens in `ShouldEnableHotkeyForGame()` in SharpMemories.cs:35
+
+**Thread Safety**:
+- Screenshot capture uses `captureLock` object to protect concurrent access to capture state
+- FileSystemWatcher events run on background thread with proper error handling
+
+**Resource Management**:
+- Native GDI handles properly released in finally blocks
+- CancellationTokenSource disposed after use
+- KeyboardHookManager implements IDisposable for proper cleanup
+- FileSystemWatcher disposed when monitoring stops
 
 ## File Structure
 
@@ -109,8 +157,10 @@ SharpMemories/
 ├── SharpMemories.cs              # Main plugin implementation
 ├── ScreenshotCaptureManager.cs   # Screenshot capture lifecycle
 ├── FolderMonitorManager.cs       # External folder monitoring
+├── KeyboardHookManager.cs        # Global hotkey support
 ├── ScreenCapture.cs              # Native Win32 screenshot utilities
 ├── FileHelpers.cs                # Filename sanitization utilities
+├── SteamHelpers.cs               # Steam integration utilities
 ├── SharpMemoriesSettings.cs      # Settings data model and view model
 ├── SharpMemoriesSettingsView.xaml # Settings UI layout
 ├── SharpMemoriesSettingsView.xaml.cs # Settings UI code-behind
@@ -132,28 +182,3 @@ SharpMemories/
 - **System.Drawing** - Image manipulation
 - **System.Windows.Forms** - Screen bounds detection
 
-## Architecture Notes
-
-### Manager Pattern
-The plugin uses a manager-based architecture where the main plugin class delegates to specialized managers:
-- **ScreenshotCaptureManager**: Handles active screenshot capture with timing control
-- **FolderMonitorManager**: Handles passive file system monitoring
-
-Both managers are instantiated once at plugin initialization and reused across game sessions.
-
-### Threading and Concurrency
-- Screenshot capture runs on background Task with CancellationToken for clean shutdown
-- Thread-safe locks protect capture state (captureCts, captureTask) in ScreenshotCaptureManager
-- FileSystemWatcher events run on background thread; file operations handled with retry logic
-
-### Resource Management
-- Native GDI handles (HDC, HBITMAP) properly released in finally blocks
-- CancellationTokenSource disposed after use
-- FileSystemWatcher disposed when monitoring stops
-- Bitmap objects disposed after saving
-
-### Error Handling
-- Extensive logging via Playnite's ILogger (Info, Debug, Warn, Error levels)
-- Graceful degradation: window capture failures fall back to screen capture
-- File locking handled with retry loop (100ms intervals, 10 second timeout)
-- Null checks on settings and game data throughout

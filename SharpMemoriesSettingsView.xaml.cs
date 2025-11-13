@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using System.Windows.Input;
 
 namespace SharpMemories
 {
@@ -10,6 +11,74 @@ namespace SharpMemories
         public SharpMemoriesSettingsView()
         {
             InitializeComponent();
+        }
+
+        private void RecordHotkey_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var vm = DataContext as SharpMemoriesSettingsViewModel;
+                if (vm == null) return;
+
+                // Toggle recording state
+                vm.IsRecordingHotkey = !vm.IsRecordingHotkey;
+
+                if (vm.IsRecordingHotkey)
+                {
+                    // Start listening for key presses
+                    this.PreviewKeyDown += OnRecordingKeyDown;
+                    this.Focus();
+                }
+                else
+                {
+                    // Stop listening
+                    this.PreviewKeyDown -= OnRecordingKeyDown;
+                }
+            }
+            catch (Exception)
+            {
+                // ignore UI errors
+            }
+        }
+
+        private void OnRecordingKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            try
+            {
+                var vm = DataContext as SharpMemoriesSettingsViewModel;
+                if (vm == null || !vm.IsRecordingHotkey) return;
+
+                // Get the actual key (not modifier keys)
+                var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+                // Ignore modifier keys by themselves
+                if (key == Key.LeftCtrl || key == Key.RightCtrl ||
+                    key == Key.LeftAlt || key == Key.RightAlt ||
+                    key == Key.LeftShift || key == Key.RightShift ||
+                    key == Key.LWin || key == Key.RWin)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                // Get modifier states
+                bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+                bool alt = (Keyboard.Modifiers & ModifierKeys.Alt) != 0;
+                bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+
+                // Update the hotkey
+                vm.UpdateHotkey(key, ctrl, alt, shift);
+
+                // Stop recording
+                vm.IsRecordingHotkey = false;
+                this.PreviewKeyDown -= OnRecordingKeyDown;
+
+                e.Handled = true;
+            }
+            catch (Exception)
+            {
+                // ignore UI errors
+            }
         }
 
         private void BrowseOutputFolder_Click(object sender, RoutedEventArgs e)

@@ -21,7 +21,8 @@
             <TextBox x:Name="OutputFolderText" Width="300" Text="{Binding Settings.OutputFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Browse..." Margin="6,0,0,0" Click="BrowseOutputFolder_Click" />
         </StackPanel>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <CheckBox Content="Monitor external screenshot folder (to copy Steam screenshots to the Playnite screenshots folder)" IsChecked="{Binding Settings.EnableMonitoring}" Margin="0,6,0,0"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsEnabled="{Binding Settings.EnableMonitoring}">
             <TextBlock Text="Monitor folder:" VerticalAlignment="Center" Margin="0,6,6,6"/>
             <TextBox x:Name="MonitorFolderText" Width="300" Text="{Binding Settings.MonitorFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Browse..." Margin="6,0,0,0" Click="BrowseMonitorFolder_Click" />
@@ -34,19 +35,9 @@
         <CheckBox Content="Enable screenshot hotkey" IsChecked="{Binding Settings.EnableHotkey}" Margin="0,0,0,6"/>
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,6,0,6">
-            <TextBlock Text="Hotkey:" VerticalAlignment="Center" Margin="0,0,6,0"/>
-            <CheckBox Content="Ctrl" IsChecked="{Binding Settings.HotkeyCtrl}" Margin="0,0,6,0"/>
-            <CheckBox Content="Alt" IsChecked="{Binding Settings.HotkeyAlt}" Margin="0,0,6,0"/>
-            <CheckBox Content="Shift" IsChecked="{Binding Settings.HotkeyShift}" Margin="0,0,6,0"/>
-            <TextBlock Text="+" VerticalAlignment="Center" Margin="6,0,6,0"/>
-            <ComboBox x:Name="HotkeyComboBox" Width="100" SelectedValue="{Binding Settings.HotkeyKey}" SelectedValuePath="Tag">
-                <ComboBoxItem Content="F12" Tag="{x:Static Key.F12}"/>
-                <ComboBoxItem Content="F11" Tag="{x:Static Key.F11}"/>
-                <ComboBoxItem Content="F10" Tag="{x:Static Key.F10}"/>
-                <ComboBoxItem Content="F9" Tag="{x:Static Key.F9}"/>
-                <ComboBoxItem Content="F8" Tag="{x:Static Key.F8}"/>
-                <ComboBoxItem Content="PrintScreen" Tag="{x:Static Key.PrintScreen}"/>
-            </ComboBox>
+            <TextBlock Text="Current Hotkey:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBlock Text="{Binding HotkeyDisplayString}" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,12,0" MinWidth="120"/>
+            <Button Content="{Binding RecordButtonText}" Click="RecordHotkey_Click" Padding="10,4" MinWidth="150"/>
         </StackPanel>
 
         <TextBlock Text="Enable hotkey for these libraries:" Margin="0,12,0,6"/>

@@ -82,8 +82,11 @@ namespace SharpMemories
                     logger.Warn("Output folder is not configured, skipping screenshot capture");
                 }
 
-                // Start monitoring the monitor folder
-                folderMonitor.StartMonitoring(gameName);
+                // Start monitoring the monitor folder if enabled
+                if (settings.Settings.EnableMonitoring && !string.IsNullOrWhiteSpace(settings.Settings.MonitorFolder))
+                {
+                    folderMonitor.StartMonitoring(gameName);
+                }
 
                 // Register keyboard hotkey if enabled for this game's library
                 if (ShouldEnableHotkeyForGame(args?.Game))

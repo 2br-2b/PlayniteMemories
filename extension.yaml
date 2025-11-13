@@ -1,7 +1,7 @@
 ﻿Id: GameMemories
-Name: Memories
+Name: Playnite Memories
 Author: John Wuller
-Version: 0.0.1
+Version: 1.0.0
 Module: SharpMemories.dll
 Type: GenericPlugin
 Icon: icon.png

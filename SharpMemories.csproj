@@ -60,6 +60,7 @@
     <Compile Include="SharpMemoriesSettingsView.xaml.cs">
       <DependentUpon>SharpMemoriesSettingsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SteamHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
