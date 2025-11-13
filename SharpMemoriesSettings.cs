@@ -31,7 +31,7 @@ namespace SharpMemories
         private bool enableMonitoring = true;
 
         // Hotkey settings
-        private bool enableHotkey = false;
+        private bool enableHotkey = true;
         private Key hotkeyKey = Key.F12;
         private bool hotkeyCtrl = false;
         private bool hotkeyAlt = false;
