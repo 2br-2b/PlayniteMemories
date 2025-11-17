@@ -11,6 +11,14 @@ It does this by:
 
 All of these behaviors can be tweaked in the extension's options
 
+## Installation
+
+Go to [the Playnite Addons list](https://playnite.link/addons.html#GameMemories) and click download!
+
+## Screenshots (of the screenshot manager 😅)
+
+![](Screenshots/Playnite%20Memories%201.png)
+
 ## Contributions
 
 PRs are welcome!
