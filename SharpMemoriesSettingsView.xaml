@@ -40,6 +40,8 @@
             <Button Content="{Binding RecordButtonText}" Click="RecordHotkey_Click" Padding="10,4" MinWidth="150"/>
         </StackPanel>
 
+        <CheckBox Content="Suppress hotkey from reaching the application (prevents F12 from opening browser dev tools, etc.)" IsChecked="{Binding Settings.HotkeySuppressKey}" Margin="0,0,0,6"/>
+
         <TextBlock Text="Enable hotkey for these libraries:" Margin="0,12,0,6"/>
         <ItemsControl ItemsSource="{Binding LibraryPlugins}" Margin="20,0,0,0">
             <ItemsControl.ItemTemplate>

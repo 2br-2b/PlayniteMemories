@@ -106,6 +106,7 @@ namespace SharpMemories
                         settings.Settings.HotkeyCtrl,
                         settings.Settings.HotkeyAlt,
                         settings.Settings.HotkeyShift,
+                        settings.Settings.HotkeySuppressKey,
                         () => screenshotCapture.CaptureOnDemand(pid, title)
                     );
                 }

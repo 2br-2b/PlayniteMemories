@@ -36,6 +36,7 @@ namespace SharpMemories
         private bool hotkeyCtrl = false;
         private bool hotkeyAlt = false;
         private bool hotkeyShift = false;
+        private bool hotkeySuppressKey = true; // Prevent the key from being passed to the application
 
         // Per-library hotkey enable flags - dynamic dictionary keyed by library plugin ID
         private Dictionary<Guid, bool> hotkeyEnabledByLibrary = new Dictionary<Guid, bool>();
@@ -52,6 +53,7 @@ namespace SharpMemories
         public bool HotkeyCtrl { get => hotkeyCtrl; set => SetValue(ref hotkeyCtrl, value); }
         public bool HotkeyAlt { get => hotkeyAlt; set => SetValue(ref hotkeyAlt, value); }
         public bool HotkeyShift { get => hotkeyShift; set => SetValue(ref hotkeyShift, value); }
+        public bool HotkeySuppressKey { get => hotkeySuppressKey; set => SetValue(ref hotkeySuppressKey, value); }
 
         // Per-library hotkey enable property - exposed as dictionary
         public Dictionary<Guid, bool> HotkeyEnabledByLibrary

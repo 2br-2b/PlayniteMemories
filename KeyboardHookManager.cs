@@ -22,20 +22,22 @@ namespace SharpMemories
         private bool _requireAlt;
         private bool _requireShift;
         private bool _isEnabled;
+        private bool _suppressKey;
 
         public KeyboardHookManager()
         {
             _proc = HookCallback;
         }
 
-        public void RegisterHotkey(Key key, bool ctrl, bool alt, bool shift, Action callback)
+        public void RegisterHotkey(Key key, bool ctrl, bool alt, bool shift, bool suppressKey, Action callback)
         {
-            logger.Info($"Registering hotkey: {(ctrl ? "Ctrl+" : "")}{(alt ? "Alt+" : "")}{(shift ? "Shift+" : "")}{key}");
+            logger.Info($"Registering hotkey: {(ctrl ? "Ctrl+" : "")}{(alt ? "Alt+" : "")}{(shift ? "Shift+" : "")}{key} (suppress: {suppressKey})");
 
             _targetKey = key;
             _requireCtrl = ctrl;
             _requireAlt = alt;
             _requireShift = shift;
+            _suppressKey = suppressKey;
             _hotkeyCallback = callback;
             _isEnabled = true;
 
@@ -99,6 +101,13 @@ namespace SharpMemories
                         catch (Exception e)
                         {
                             logger.Error(e, "Error in hotkey callback");
+                        }
+
+                        // If suppress is enabled, return non-zero to prevent the key from reaching the application
+                        if (_suppressKey)
+                        {
+                            logger.Debug("Suppressing key event");
+                            return (IntPtr)1;
                         }
                     }
                 }
