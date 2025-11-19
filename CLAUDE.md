@@ -8,29 +8,43 @@ SharpMemories is a Playnite plugin that automatically captures screenshots of ga
 
 ## Build Commands
 
-### Development Build
-```bash
-# Build debug version
-msbuild SharpMemories.sln /p:Configuration=Debug
-
-# Or using dotnet (if available)
-dotnet build SharpMemories.sln --configuration Debug
-```
-
-### Production Build
-```bash
-# Build release version
-msbuild SharpMemories.sln /p:Configuration=Release
-
-# Or using dotnet (if available)
-dotnet build SharpMemories.sln --configuration Release
-```
-
-### Using Visual Studio
-```bash
-# Open solution in Visual Studio
+### Using Visual Studio (Recommended)
+```powershell
+# Open solution in Visual Studio and build using Ctrl+Shift+B or Build menu
 start SharpMemories.sln
 ```
+
+### Using Developer Command Prompt for Visual Studio
+```powershell
+# Open "Developer Command Prompt for VS" or "Developer PowerShell for VS" from Start menu
+# Then run:
+msbuild SharpMemories.sln /p:Configuration=Debug
+msbuild SharpMemories.sln /p:Configuration=Release
+```
+
+### Using MSBuild directly (Windows 11)
+
+Open PowerShell and run:
+```powershell
+# Development Build
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" SharpMemories.sln /p:Configuration=Debug
+
+# Production Build
+& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" SharpMemories.sln /p:Configuration=Release
+```
+
+Or from Command Prompt/Bash:
+```bash
+# Development Build
+powershell -Command "& 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe' SharpMemories.sln /p:Configuration=Debug"
+
+# Production Build
+powershell -Command "& 'C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe' SharpMemories.sln /p:Configuration=Release"
+```
+
+Note: Adjust path if using Professional or Enterprise edition:
+- Professional: `C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe`
+- Enterprise: `C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe`
 
 ## Architecture
 
