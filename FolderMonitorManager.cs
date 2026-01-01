@@ -135,7 +135,7 @@ namespace SharpMemories
                 var destinationPath = Path.Combine(finalGameFolder, e.Name); // e.Name includes filename and extension
 
                 // Delegate the actual heavy lifting (waiting and moving) to the helper
-                FileOperationHelper.MoveFileSafe(e.FullPath, destinationPath);
+                FileHelpers.MoveFileSafe(e.FullPath, destinationPath);
             }
             catch (Exception ex)
             {

@@ -54,14 +54,17 @@
     <Compile Include="FileHelpers.cs" />
     <Compile Include="FolderMonitorManager.cs" />
     <Compile Include="KeyboardHookManager.cs" />
+    <Compile Include="LibraryPluginInfo.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="ScreenCapture.cs" />
     <Compile Include="ScreenshotCaptureManager.cs" />
+    <Compile Include="ScreenshotValidator.cs" />
     <Compile Include="SharpMemories.cs" />
     <Compile Include="SharpMemoriesSettings.cs" />
     <Compile Include="SharpMemoriesSettingsView.xaml.cs">
       <DependentUpon>SharpMemoriesSettingsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SharpMemoriesSettingsViewModel.cs" />
     <Compile Include="SteamHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

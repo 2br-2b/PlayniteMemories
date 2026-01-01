@@ -10,267 +10,291 @@ using System.Threading.Tasks;
 
 namespace SharpMemories
 {
+    /// <summary>
+    /// Manages the automated and on-demand capturing of screenshots for running games.
+    /// Handles the background loop, process monitoring, and file saving orchestration.
+    /// </summary>
     public class ScreenshotCaptureManager
     {
-        private static readonly ILogger logger = LogManager.GetLogger();
+        #region Fields
+        private static readonly ILogger _logger = LogManager.GetLogger();
+        private readonly SharpMemoriesSettingsViewModel _settings;
+        private readonly object _captureLock = new object();
 
-        private readonly SharpMemoriesSettingsViewModel settings;
-        private CancellationTokenSource captureCts;
-        private Task captureTask;
-        private int currentGameProcessId = 0;
-        private string currentGameTitle = null;
-        private readonly object captureLock = new object();
+        private CancellationTokenSource _captureCts;
+        private Task _captureTask;
+        private int _currentGameProcessId = 0;
+        private string _currentGameTitle = null;
+        #endregion
 
+        #region Constructors
         public ScreenshotCaptureManager(SharpMemoriesSettingsViewModel settings)
         {
-            this.settings = settings;
+            this._settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
+        #endregion
 
+        #region Public Methods
+        /// <summary>
+        /// Starts the automatic capture loop for a specific game process.
+        /// </summary>
+        /// <param name="processId">The ID of the game process.</param>
+        /// <param name="gameTitle">The display title of the game.</param>
         public void StartCaptureForProcess(int processId, string gameTitle)
         {
-            lock (captureLock)
+            lock (_captureLock)
             {
-                // stop any existing capture
-                if (captureCts != null)
+                // Ensure any previous session is cleanly stopped before starting a new one
+                if (_captureCts != null)
                 {
-                    logger.Debug("Stopping existing capture before starting new one");
+                    _logger.Debug("An existing capture session was found. Stopping it before starting the new session.");
+                    StopCapture();
                 }
-                StopCapture();
 
-                logger.Debug($"Initializing capture for process {processId}, game: {gameTitle}");
-                currentGameProcessId = processId;
-                currentGameTitle = gameTitle;
-                captureCts = new CancellationTokenSource();
-                captureTask = Task.Run(() => CaptureLoop(processId, gameTitle, captureCts.Token));
+                _logger.Info($"Initializing automatic capture session. Process ID: {processId} | Game: {gameTitle}");
+
+                _currentGameProcessId = processId;
+                _currentGameTitle = gameTitle;
+
+                _captureCts = new CancellationTokenSource();
+                _captureTask = Task.Run(() => CaptureLoop(processId, gameTitle, _captureCts.Token));
             }
         }
 
+        /// <summary>
+        /// Stops the current capture loop and cleans up resources.
+        /// </summary>
         public void StopCapture()
         {
-            lock (captureLock)
+            lock (_captureLock)
             {
                 try
                 {
-                    if (captureCts != null)
+                    if (_captureCts != null)
                     {
-                        logger.Info($"Stopping capture loop for game: {currentGameTitle ?? "Unknown"}");
-                        captureCts.Cancel();
-                        try { captureTask?.Wait(2000); } catch { }
-                        captureCts.Dispose();
-                        captureCts = null;
-                        logger.Debug("Capture task cancelled and disposed");
-                    }
-                    else
-                    {
-                        logger.Debug("No active capture to stop");
+                        _logger.Info($"Stopping capture session for: {_currentGameTitle ?? "Unknown Game"}");
+
+                        _captureCts.Cancel();
+
+                        // Wait briefly for the task to acknowledge cancellation
+                        try
+                        {
+                            _captureTask?.Wait(2000);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Warn(ex, "Exception occurred while waiting for capture task to stop.");
+                        }
+
+                        _captureCts.Dispose();
+                        _captureCts = null;
+                        _logger.Debug("Capture resources disposed successfully.");
                     }
                 }
                 finally
                 {
-                    captureTask = null;
-                    currentGameProcessId = 0;
-                    currentGameTitle = null;
+                    _captureTask = null;
+                    _currentGameProcessId = 0;
+                    _currentGameTitle = null;
                 }
             }
         }
 
+        /// <summary>
+        /// Immediately captures a screenshot for the specified game, bypassing the timer.
+        /// </summary>
         public void CaptureOnDemand(int processId, string gameTitle)
         {
-            logger.Info($"On-demand screenshot capture triggered for '{gameTitle}'");
-            CaptureOnce(processId, gameTitle);
+            _logger.Info($"Manual trigger: Capturing screenshot for '{gameTitle}'");
 
-            // Play a sound
-            try 
-            {
-                System.Media.SystemSounds.Asterisk.Play();
-            }
-            catch (Exception e) 
-            { 
-                logger.Error(e, "Error playing sound on screenshot capture");
-            }
+            PerformCapture(processId, gameTitle);
+            PlayCaptureSound();
         }
+        #endregion
 
+        #region Worker Methods
+        /// <summary>
+        /// The main background loop that triggers screenshots at configured intervals.
+        /// </summary>
         private async Task CaptureLoop(int processId, string gameTitle, CancellationToken token)
         {
             try
             {
-                var intervalMinutes = settings?.Settings?.IntervalMinutes ?? 30;
+                var intervalMinutes = _settings.Settings?.IntervalMinutes ?? 30;
+
+                // Enforce a sensible minimum to prevent spamming
                 if (intervalMinutes <= 0) intervalMinutes = 30;
+
                 var interval = TimeSpan.FromMinutes(intervalMinutes);
 
-                logger.Info($"Capture loop started for '{gameTitle}' with interval: {intervalMinutes} minutes");
+                _logger.Info($"Capture loop active. Next screenshot in {intervalMinutes} minutes.");
 
                 while (!token.IsCancellationRequested)
                 {
                     try
                     {
-                        logger.Debug($"Waiting {intervalMinutes} minutes before next capture");
                         await Task.Delay(interval, token);
                     }
                     catch (TaskCanceledException)
                     {
-                        logger.Debug("Capture loop cancelled during delay");
+                        _logger.Debug("Capture loop delay cancelled. Exiting loop.");
                         break;
                     }
 
                     if (token.IsCancellationRequested) break;
 
-                    await Task.Run(() => CaptureOnce(processId, gameTitle));
+                    // Execute capture on a background thread to ensure loop timing isn't blocked
+                    await Task.Run(() => PerformCapture(processId, gameTitle), token);
                 }
-
-                logger.Info($"Capture loop ended for '{gameTitle}'");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                logger.Error(e, "Error in CaptureLoop");
+                _logger.Error(ex, "Unexpected error occurred within the CaptureLoop.");
+            }
+            finally
+            {
+                _logger.Info($"Capture loop terminated for '{gameTitle}'.");
             }
         }
 
-        private void CaptureOnce(int processId, string gameTitle)
+        /// <summary>
+        /// Orchestrates the logic of acquiring the image and saving it to disk.
+        /// </summary>
+        private void PerformCapture(int processId, string gameTitle)
         {
             Bitmap bmp = null;
             try
             {
-                logger.Debug($"Starting screenshot capture for '{gameTitle}' (PID: {processId})");
+                _logger.Debug($"Initiating capture routine for Process {processId} ({gameTitle})");
 
-                if (processId > 0)
+                // 1. Attempt to capture the specific game window
+                bmp = TryCaptureGameWindow(processId);
+
+                // 2. Fallback to primary screen if window capture failed
+                if (bmp == null)
                 {
-                    try
-                    {
-                        var proc = Process.GetProcessById(processId);
-                        if (proc != null)
-                        {
-                            var h = proc.MainWindowHandle;
-                            if (h != IntPtr.Zero)
-                            {
-                                // Is the game minimized?
-                                if (ScreenCapture.IsIconic(h))
-                                {
-                                    logger.Debug($"Game process {processId} is minimized. Skipping capture.");
-                                    return;
-                                }
+                    _logger.Debug("Window capture unavailable. Falling back to primary screen capture.");
+                    bmp = ScreenCapture.CapturePrimaryScreen();
+                }
 
-                                logger.Debug($"Attempting to capture window for process {processId}");
-                                bmp = ScreenCapture.CaptureWindow(h);
-                                if (bmp != null)
-                                {
-                                    logger.Debug("Window capture successful");
-                                }
-                                else
-                                {
-                                    logger.Debug("Window capture returned null, will fallback to screen capture");
-                                }
-                            }
-                            else
-                            {
-                                logger.Debug("Process has no main window handle, will use screen capture");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Debug($"Failed to capture window: {ex.Message}");
-                    }
+                // 3. If everything failed, abort
+                if (bmp == null)
+                {
+                    _logger.Warn("Screenshot failed. Both window and screen capture returned null.");
+                    return;
+                }
+
+                // 4. Determine output path
+                string outputPath = PrepareOutputPath(gameTitle);
+
+                // 5. Save the file based on settings
+                var format = _settings.Settings.ScreenshotFormat;
+
+                if (format == ScreenshotFormat.Png)
+                {
+                    var file = Path.Combine(outputPath, GenerateFileName(gameTitle, "png"));
+                    FileHelpers.SaveAsPng(bmp, file);
                 }
                 else
                 {
-                    logger.Debug("No process ID available, using screen capture");
+                    var file = Path.Combine(outputPath, GenerateFileName(gameTitle, "jpeg"));
+                    FileHelpers.SaveAsJpeg(bmp, file, _settings.Settings.JpegQuality);
                 }
-
-                if (bmp == null)
-                {
-                    logger.Debug("Window capture failed. Performing full screen capture of the primary screen.");
-                    bmp = ScreenCapture.CapturePrimaryScreen();
-                    if (bmp == null)
-                    {
-                        logger.Warn("Even full screen capture failed. No screenshot taken.");
-                        return;
-                    }
-                }
-
-                var outFolder = settings?.Settings?.OutputFolder;
-                if (string.IsNullOrWhiteSpace(outFolder))
-                {
-                    outFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Playnite", "Plugins", "SharpMemories", "Screenshots");
-                    logger.Debug($"Using default output folder: {outFolder}");
-                }
-
-                var safeTitle = FileHelpers.MakeSafeFilename(gameTitle ?? "game");
-
-                outFolder = Path.Combine(outFolder, safeTitle);
-
-                Directory.CreateDirectory(outFolder);
-                string filename = string.Empty;
-
-                if (settings.Settings.ScreenshotFormat == ScreenshotFormat.Png)
-                {
-                    filename = Path.Combine(outFolder, $"{safeTitle}_{DateTime.Now:yyyyMMdd_HHmmss}.png");
-                    SaveUncompressed(bmp, filename);
-                }
-                else if(settings.Settings.ScreenshotFormat == ScreenshotFormat.Jpeg)
-                {
-                    filename = Path.Combine(outFolder, $"{safeTitle}_{DateTime.Now:yyyyMMdd_HHmmss}.jpeg");
-                    SaveCompressed(bmp, filename, settings.Settings.JpegQuality);
-                }
-
-                logger.Info($"Saved screenshot: {filename}");
-            }
-            catch (Exception e)
-            {
-                logger.Error(e, "Error taking screenshot");
-            }
-            finally
-            {
-                bmp?.Dispose();
-            }
-        }
-
-        public static void SaveUncompressed(Bitmap bmp, string path)
-        {
-            bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
-        }
-
-        /// <summary>
-        /// Saves a bitmap as a JPEG with the specified quality level.
-        /// </summary>
-        /// <param name="bmp">The image to save.</param>
-        /// <param name="path">The full output path.</param>
-        /// <param name="quality">Quality from 0 to 100 (Default 85 is a good balance).</param>
-        public static void SaveCompressed(Bitmap bmp, string path, long quality = 85)
-        {
-            try
-            {
-                if (quality < 0 || quality > 100)
-                    quality = 85;
-
-                // Get the JPEG codec
-                ImageCodecInfo jpgEncoder = GetEncoder(ImageFormat.Jpeg);
-
-                // Create an Encoder object based on the GUID for the Quality parameter category
-                System.Drawing.Imaging.Encoder myEncoder = System.Drawing.Imaging.Encoder.Quality;
-
-                // Create an EncoderParameters object
-                // An array of EncoderParameter objects
-                EncoderParameters myEncoderParameters = new EncoderParameters(1);
-
-                // Save the bitmap as a JPEG file with the specified quality level
-                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, quality);
-                myEncoderParameters.Param[0] = myEncoderParameter;
-
-                bmp.Save(path, jpgEncoder, myEncoderParameters);
             }
             catch (Exception ex)
             {
-                // Fallback to standard save if compression fails
-                bmp.Save(path, ImageFormat.Jpeg);
-                throw new Exception("Error compressing image, saved as standard JPEG.", ex);
+                _logger.Error(ex, $"Critical error during screenshot execution for '{gameTitle}'.");
+            }
+            finally
+            {
+                // Always dispose the bitmap to prevent GDI+ memory leaks
+                bmp?.Dispose();
+            }
+        }
+        #endregion
+
+        #region Helper Methods
+        /// <summary>
+        /// Attempts to find the game window and capture it. Returns null if minimized or not found.
+        /// </summary>
+        private Bitmap TryCaptureGameWindow(int processId)
+        {
+            if (processId <= 0) return null;
+
+            try
+            {
+                var proc = Process.GetProcessById(processId);
+                var handle = proc.MainWindowHandle;
+
+                if (handle == IntPtr.Zero)
+                {
+                    _logger.Debug($"Process {processId} exists but has no main window handle.");
+                    return null;
+                }
+
+                if (NativeMethods.IsIconic(handle))
+                {
+                    _logger.Debug($"Game process {processId} is currently minimized. Capture skipped.");
+                    return null;
+                }
+
+                return ScreenCapture.CaptureWindow(handle);
+            }
+            catch (ArgumentException)
+            {
+                _logger.Warn($"Process {processId} is no longer running.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while attempting to capture game window.");
+                return null;
             }
         }
 
-        private static ImageCodecInfo GetEncoder(ImageFormat format)
+        /// <summary>
+        /// Prepares the directory structure for the screenshot and returns the folder path.
+        /// </summary>
+        private string PrepareOutputPath(string gameTitle)
         {
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageDecoders();
-            return codecs.FirstOrDefault(codec => codec.FormatID == format.Guid);
+            var baseFolder = _settings.Settings?.OutputFolder;
+
+            if (string.IsNullOrWhiteSpace(baseFolder))
+            {
+                baseFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Playnite", "Plugins", "SharpMemories", "Screenshots");
+            }
+
+            var safeTitle = FileHelpers.MakeSafeFilename(gameTitle ?? "UnknownGame");
+            var gameFolder = Path.Combine(baseFolder, safeTitle);
+
+            if (!Directory.Exists(gameFolder))
+            {
+                Directory.CreateDirectory(gameFolder);
+            }
+
+            return gameFolder;
         }
+
+        private string GenerateFileName(string gameTitle, string extension)
+        {
+            var safeTitle = FileHelpers.MakeSafeFilename(gameTitle ?? "UnknownGame");
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            return $"{safeTitle}_{timestamp}.{extension}";
+        }
+
+        private void PlayCaptureSound()
+        {
+            try
+            {
+                System.Media.SystemSounds.Asterisk.Play();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Could not play capture sound.");
+            }
+        }
+        #endregion
     }
 }
