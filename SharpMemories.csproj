@@ -51,21 +51,21 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileHelpers.cs" />
-    <Compile Include="FolderMonitorManager.cs" />
-    <Compile Include="KeyboardHookManager.cs" />
-    <Compile Include="LibraryPluginInfo.cs" />
-    <Compile Include="NativeMethods.cs" />
-    <Compile Include="ScreenCapture.cs" />
-    <Compile Include="ScreenshotCaptureManager.cs" />
-    <Compile Include="ScreenshotValidator.cs" />
+    <Compile Include="Utilities\FileHelpers.cs" />
+    <Compile Include="Services\FolderMonitorManager.cs" />
+    <Compile Include="Services\KeyboardHookManager.cs" />
+    <Compile Include="Configuration\LibraryPluginInfo.cs" />
+    <Compile Include="Interop\NativeMethods.cs" />
+    <Compile Include="Imaging\ScreenCapture.cs" />
+    <Compile Include="Services\ScreenshotCaptureManager.cs" />
+    <Compile Include="Imaging\ScreenshotValidator.cs" />
     <Compile Include="SharpMemories.cs" />
-    <Compile Include="SharpMemoriesSettings.cs" />
-    <Compile Include="SharpMemoriesSettingsView.xaml.cs">
+    <Compile Include="Configuration\SharpMemoriesSettings.cs" />
+    <Compile Include="Configuration\SharpMemoriesSettingsView.xaml.cs">
       <DependentUpon>SharpMemoriesSettingsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SharpMemoriesSettingsViewModel.cs" />
-    <Compile Include="SteamHelpers.cs" />
+    <Compile Include="Configuration\SharpMemoriesSettingsViewModel.cs" />
+    <Compile Include="Utilities\SteamHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -86,7 +86,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="SharpMemoriesSettingsView.xaml">
+    <Page Include="Configuration\SharpMemoriesSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
