@@ -334,9 +334,9 @@ namespace SharpMemories
             bool isValid = false;
 
             // If more than 95% of sampled pixels are black or white, consider it invalid
-            if (blackPixels < (sampleSize * 0.95))
+            if (blackPixels > (sampleSize * 0.95))
                 _logger.Warn("The captured image was invalid as it was all black.");
-            else if (whitePixels < (sampleSize * 0.95))
+            else if (whitePixels > (sampleSize * 0.95))
                 _logger.Warn("The captured image was invalid as it was all white.");
             // Check if the bitmap is unique
             else if (!IsUniqueImage(bitmap))
