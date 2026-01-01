@@ -54,6 +54,7 @@
     <Compile Include="FileHelpers.cs" />
     <Compile Include="FolderMonitorManager.cs" />
     <Compile Include="KeyboardHookManager.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="ScreenCapture.cs" />
     <Compile Include="ScreenshotCaptureManager.cs" />
     <Compile Include="SharpMemories.cs" />
