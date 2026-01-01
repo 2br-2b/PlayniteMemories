@@ -22,13 +22,23 @@ namespace SharpMemories
         }
     }
 
+    public enum ScreenshotFormat
+    {
+        Png,
+        Jpeg
+    }
+
     public class SharpMemoriesSettings : ObservableObject
     {
+        private static readonly ILogger logger = LogManager.GetLogger();
+
         private bool enabled = true;
         private int intervalMinutes = 15;
         private string outputFolder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Playnite");
         private string monitorFolder = string.Empty;
         private bool enableMonitoring = true;
+        private ScreenshotFormat screenshotFormat = ScreenshotFormat.Png;
+        private long jpegQuality = 85;
 
         // Hotkey settings
         private bool enableHotkey = true;
@@ -46,6 +56,9 @@ namespace SharpMemories
         public string OutputFolder { get => outputFolder; set => SetValue(ref outputFolder, value); }
         public string MonitorFolder { get => monitorFolder; set => SetValue(ref monitorFolder, value); }
         public bool EnableMonitoring { get => enableMonitoring; set => SetValue(ref enableMonitoring, value); }
+        public ScreenshotFormat ScreenshotFormat { get => screenshotFormat; set => SetValue(ref screenshotFormat, value, nameof(ScreenshotFormat), nameof(IsJpegFormat)); }
+        public bool IsJpegFormat => ScreenshotFormat == ScreenshotFormat.Jpeg;
+        public long JpegQuality { get => jpegQuality; set => SetValue(ref jpegQuality, value, nameof(JpegQuality)); }
 
         // Hotkey properties
         public bool EnableHotkey { get => enableHotkey; set => SetValue(ref enableHotkey, value); }
@@ -217,6 +230,13 @@ namespace SharpMemories
             // Executed before EndEdit is called and EndEdit is not called if false is returned.
             // List of errors is presented to user if verification fails.
             errors = new List<string>();
+
+            if(Settings.JpegQuality < 0 || Settings.JpegQuality > 100)
+            {
+                errors.Add("Jpeg Quality must be between 0 and 100!");
+                return false;
+            }
+
             return true;
         }
 
