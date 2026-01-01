@@ -3,8 +3,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:my="clr-namespace:SharpMemories"
              mc:Ignorable="d"
              d:DesignHeight="400" d:DesignWidth="600">
+    <UserControl.Resources>
+        <ObjectDataProvider x:Key="ScreenshotFormatValues" 
+                        MethodName="GetValues" 
+                        ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="my:ScreenshotFormat"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </UserControl.Resources>
     <StackPanel>
         <!--<TextBlock Text="Description for Option1:"/>
         <TextBox Text="{Binding Settings.Option1}"/>
@@ -14,7 +25,7 @@
         <CheckBox Content="Enable automatic screenshots when a game starts" IsChecked="{Binding Settings.Enabled}"/>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="Interval (minutes):" VerticalAlignment="Center" Margin="0,6,6,6"/>
-            <TextBox Width="60" Text="{Binding Settings.IntervalMinutes}" />
+            <TextBox Width="60" Text="{Binding Settings.IntervalMinutes}" PreviewTextInput="TextBox_PreviewTextInput" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="Output folder:" VerticalAlignment="Center" Margin="0,6,6,6"/>
@@ -26,6 +37,14 @@
             <TextBlock Text="Monitor folder:" VerticalAlignment="Center" Margin="0,6,6,6"/>
             <TextBox x:Name="MonitorFolderText" Width="300" Text="{Binding Settings.MonitorFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Browse..." Margin="6,0,0,0" Click="BrowseMonitorFolder_Click" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Screenshot format:" VerticalAlignment="Center" Margin="0,6,6,6"/>
+            <ComboBox SelectedItem="{Binding Settings.ScreenshotFormat}" ItemsSource="{Binding Source={StaticResource ScreenshotFormatValues}}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsEnabled="{Binding Settings.IsJpegFormat}">
+            <TextBlock Text="Jpeg quality (0-100):" VerticalAlignment="Center" Margin="0,6,6,6"/>
+            <TextBox x:Name="JpegQualityText" Width="50" Text="{Binding Settings.JpegQuality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PreviewTextInput="TextBox_PreviewTextInput" />
         </StackPanel>
 
         <Separator Margin="0,12,0,12"/>
