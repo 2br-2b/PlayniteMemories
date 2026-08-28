@@ -13,7 +13,7 @@
 
     <!-- 👇 新增 -->
     <sys:String x:Key="LOCSharpMemories_Settings_RenamePattern">Rename Pattern</sys:String>
-    <sys:String x:Key="LOCSharpMemories_Settings_Tip_RenamePattern">Available tokens: {{game}} {{date}} {{time}} {{datetime}}</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_Tip_RenamePattern">Available variables: {{game}} {{date}} {{time}} {{datetime}}</sys:String>
     <sys:String x:Key="LOCSharpMemories_Settings_Tip_RenamePatternLabel">Available variables: {{game}} game name, {{date}} date, {{time}} time, {{datetime}} date time, {{original}} original name</sys:String>
 
     <sys:String x:Key="LOCSharpMemories_Settings_HotkeyTitle">Screenshot Hotkey</sys:String>
