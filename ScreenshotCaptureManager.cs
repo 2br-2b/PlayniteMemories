@@ -81,8 +81,8 @@ namespace SharpMemories
             try {
                 System.Media.SystemSounds.Asterisk.Play();
             }
-            catch (Exception e) 
-            { 
+            catch (Exception e)
+            {
                 logger.Error(e, "Error playing sound on screenshot capture");
             }
         }
@@ -123,8 +123,10 @@ namespace SharpMemories
             }
         }
 
-        private void CaptureOnce(int processId, string gameTitle)
+        private string CaptureOnce(int processId, string gameTitle)
         {
+            string savedPath = null;
+
             try
             {
                 logger.Debug($"Starting screenshot capture for '{gameTitle}' (PID: {processId})");
@@ -176,7 +178,7 @@ namespace SharpMemories
                 if (bmp == null)
                 {
                     logger.Warn("Capture returned null bitmap");
-                    return;
+                    return null;
                 }
 
                 var outFolder = settings?.Settings?.OutputFolder;
@@ -192,14 +194,35 @@ namespace SharpMemories
 
                 try { Directory.CreateDirectory(outFolder); } catch (Exception ex) { logger.Error(ex, "Failed to create output folder"); }
 
-                var filename = Path.Combine(outFolder, $"{safeTitle}_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                var now = DateTime.Now;
+                var pattern = settings?.Settings?.RenamePattern;
+
+                if (string.IsNullOrWhiteSpace(pattern))
+                {
+                    pattern = "{game}_{datetime}";
+                }
+
+                var result = pattern
+                    .Replace("{game}", safeTitle)
+                    .Replace("{date}", now.ToString("yyyy-MM-dd"))
+                    .Replace("{time}", now.ToString("HH_mm_ss"))
+                    .Replace("{datetime}", now.ToString("yyyy-MM-dd_HH_mm_ss"))
+                    .Replace("{original}", safeTitle);
+
+                result = string.Concat(result.Split(Path.GetInvalidFileNameChars()));
+
+                var filename = Path.Combine(outFolder, result + ".png");
+
                 bmp.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
                 bmp.Dispose();
+                savedPath = filename;
                 logger.Info($"Saved screenshot: {filename}");
+                return savedPath;
             }
             catch (Exception e)
             {
                 logger.Error(e, "Error taking screenshot");
+                return null;
             }
         }
     }

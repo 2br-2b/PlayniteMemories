@@ -11,38 +11,50 @@
         <TextBlock Text="Description for Option2:"/>
         <CheckBox IsChecked="{Binding Settings.Option2}"/>
         <Separator Margin="6"/>-->
-        <CheckBox Content="Enable automatic screenshots when a game starts" IsChecked="{Binding Settings.Enabled}"/>
+        <CheckBox Content="{DynamicResource LOCSharpMemories_Settings_EnableAutoScreenshots}" IsChecked="{Binding Settings.Enabled}"/>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Interval (minutes):" VerticalAlignment="Center" Margin="0,6,6,6"/>
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_IntervalLabel}" VerticalAlignment="Center" Margin="0,6,6,6"/>
             <TextBox Width="60" Text="{Binding Settings.IntervalMinutes}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Output folder:" VerticalAlignment="Center" Margin="0,6,6,6"/>
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_OutputFolderLabel}" VerticalAlignment="Center" Margin="0,6,6,6"/>
             <TextBox x:Name="OutputFolderText" Width="300" Text="{Binding Settings.OutputFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Browse..." Margin="6,0,0,0" Click="BrowseOutputFolder_Click" />
+            <Button Content="{DynamicResource LOCSharpMemories_Settings_BrowseButton}" Margin="6,0,0,0" Click="BrowseOutputFolder_Click" />
         </StackPanel>
-        <CheckBox Content="Monitor external screenshot folder (to copy Steam screenshots to the Playnite screenshots folder)" IsChecked="{Binding Settings.EnableMonitoring}" Margin="0,6,0,0"/>
+        <!-- Rename pattern input -->
+        <StackPanel Orientation="Vertical" Margin="0,6,0,6">
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_RenamePattern}" Margin="0,0,0,4"/>
+            <TextBox Text="{Binding Settings.RenamePattern, UpdateSourceTrigger=PropertyChanged}"
+                    Width="300"
+                    HorizontalAlignment="Left"
+                    ToolTip="{DynamicResource LOCSharpMemories_Settings_Tip_RenamePattern}"/>
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_Tip_RenamePatternLabel}"
+                    Foreground="Gray" FontSize="11"
+                    TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <CheckBox Content="{DynamicResource LOCSharpMemories_Settings_MonitorExternalFolder}" IsChecked="{Binding Settings.EnableMonitoring}" Margin="0,6,0,0"/>
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsEnabled="{Binding Settings.EnableMonitoring}">
-            <TextBlock Text="Monitor folder:" VerticalAlignment="Center" Margin="0,6,6,6"/>
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_MonitorFolderLabel}" VerticalAlignment="Center" Margin="0,6,6,6"/>
             <TextBox x:Name="MonitorFolderText" Width="300" Text="{Binding Settings.MonitorFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-            <Button Content="Browse..." Margin="6,0,0,0" Click="BrowseMonitorFolder_Click" />
+            <Button Content="{DynamicResource LOCSharpMemories_Settings_BrowseButton}" Margin="6,0,0,0" Click="BrowseMonitorFolder_Click" />
         </StackPanel>
 
         <Separator Margin="0,12,0,12"/>
 
         <!-- Hotkey Settings -->
-        <TextBlock Text="Screenshot Hotkey" FontWeight="Bold" Margin="0,0,0,6"/>
-        <CheckBox Content="Enable screenshot hotkey" IsChecked="{Binding Settings.EnableHotkey}" Margin="0,0,0,6"/>
+        <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_HotkeyTitle}" FontWeight="Bold" Margin="0,0,0,6"/>
+        <CheckBox Content="{DynamicResource LOCSharpMemories_Settings_EnableHotkey}" IsChecked="{Binding Settings.EnableHotkey}" Margin="0,0,0,6"/>
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,6,0,6">
-            <TextBlock Text="Current Hotkey:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_CurrentHotkeyLabel}" VerticalAlignment="Center" Margin="0,0,6,0"/>
             <TextBlock Text="{Binding HotkeyDisplayString}" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,12,0" MinWidth="120"/>
             <Button Content="{Binding RecordButtonText}" Click="RecordHotkey_Click" Padding="10,4" MinWidth="150"/>
         </StackPanel>
 
-        <CheckBox Content="Suppress hotkey from reaching the application (prevents F12 from opening browser dev tools, etc.)" IsChecked="{Binding Settings.HotkeySuppressKey}" Margin="0,0,0,6"/>
+        <CheckBox Content="{DynamicResource LOCSharpMemories_Settings_SuppressHotkey}" IsChecked="{Binding Settings.HotkeySuppressKey}" Margin="0,0,0,6"/>
 
-        <TextBlock Text="Enable hotkey for these libraries:" Margin="0,12,0,6"/>
+        <TextBlock Text="{DynamicResource LOCSharpMemories_Settings_HotkeyLibrariesLabel}" Margin="0,12,0,6"/>
         <ItemsControl ItemsSource="{Binding LibraryPlugins}" Margin="20,0,0,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
