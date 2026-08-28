@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- SharpMemories Settings View -->
+    <sys:String x:Key="LOCSharpMemories_Settings_EnableAutoScreenshots">启用自动截图功能</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_IntervalLabel">间隔（分钟）：</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_OutputFolderLabel">输出文件夹：</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_BrowseButton">浏览...</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_MonitorExternalFolder">监控外部截图文件夹（将 Steam 截图复制到 Playnite 截图文件夹）</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_MonitorFolderLabel">监控文件夹：</sys:String>
+
+    <!-- 👇 新增 -->
+    <sys:String x:Key="LOCSharpMemories_Settings_RenamePattern">重命名模式</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_Tip_RenamePattern">可用变量: {{game}} {{date}} {{time}} {{datetime}}</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_Tip_RenamePatternLabel">可用变量: {{game}} 游戏名, {{date}} 日期, {{time}} 时间, {{datetime}} 日期时间, {{original}} 原名</sys:String>
+
+    <sys:String x:Key="LOCSharpMemories_Settings_HotkeyTitle">截图快捷键</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_EnableHotkey">启用截图快捷键</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_CurrentHotkeyLabel">当前快捷键：</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_SuppressHotkey">阻止快捷键传递到应用程序（防止 F12 打开浏览器开发工具等）</sys:String>
+    <sys:String x:Key="LOCSharpMemories_Settings_HotkeyLibrariesLabel">为以下库启用快捷键：</sys:String>
+
+</ResourceDictionary>
